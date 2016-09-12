@@ -797,17 +797,17 @@ x2 = Set(collect(1:1000000))
 # 1. read in text file as a string
 str = readall("start.jl")
 # 2. replace non alphabet characters from text with a space
-nonalpha = r"(\W\s?)"
+nonalpha = r"(\W\s?)" #> non-word, any white space/0 or 1
 str = replace(str, nonalpha, ' ')
-digits1 = r"(\d+)"
+digits1 = r"(\d+)" #> any digit/one or more
 str = replace(str, digits1, ' ')
 # 3. split text in words
-word_list = split(str, ' ')
+word_list = split(str, ' ') #> split by ' '
 # 4. make a dictionary with the words and count their frequecies
 word_freq = Dict{AbstractString, Int64}()
 for word in word_list
-  word = strip(word)
-  if isempty(word) continue end
+  word = strip(word) #> remove any space at begin or end
+  if isempty(word) continue end #> skip emty word
   haskey(word_freq, word) ?
     word_freq[word] += 1 :
     word_freq[word] = 1
@@ -818,3 +818,74 @@ words = sort!(collect(keys(word_freq)))
 for word in words
   println("$word: $(word_freq[word])")
 end
+
+
+# type annotations and conversions
+(31+42)::Float64 #> type error
+convert(Int64, 7.0)
+convert(AbstractString, 7.0) #> error
+convert(Int64, "cs") #> error
+convert(Int64, 7.01) #> error lost precision
+promote(1, 2.5, 3//4)
+promote(1.5, im)
+promote(true, 'c', 1.0)
+
+super(Int64)
+super(Signed)
+super(Integer)
+super(Real)
+super(Number)
+super(Any)
+
+subtypes(Integer)
+subtypes(Int64)
+Bool <: Integer
+issubtype(Bool, Integer)
+
+x = println("hello") #> printing is the side effect
+x == nothing
+
+# User-defined and composite types
+type Point
+  x::Float64
+  y::Float64
+  z::Float64
+end
+p1 = Point(2, 4, 1.4)
+typeof(p1)
+names(p1)
+names(Point)
+methods(Point)
+p1.y
+p1.y = 3.14
+p1
+# immutable object
+immutable Vector3D
+  x::Float64
+  y::Float64
+  Z::Float64
+end
+p2 = Vector3D(1, 2, 3)
+p.y = 5 #> error immutable
+
+5 == 5
+5 == 5.0
+is(5, 5)
+is(5, 5.0)
+5 === 5.0
+
+q1 = Vector3D(4, 3.14, 2.71)
+q2 = Vector3D(4, 3.14, 2.71)
+is(q1, q2)
+
+
+# multiple dispatch
+abstract Employee
+type Developer <: Employee #> subtype
+  name::AbstractString
+  iq
+  favoriate_lang::AbstractString
+end
+Developer(name, iq) = Developer(name, iq, "Java")
+devel1 = Developer("Bob", 110)
+devel2 = Developer("William", 145, "julia")
