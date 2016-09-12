@@ -375,4 +375,331 @@ end
 filter(n -> iseven(n), collect(1:10))
 
 # list comprehensions - create an array
-            
+arr = Float64[x^2 for x in 1:4]
+cubes = [x^3 for x in 1:5]
+# create a array
+mat1 = [x+y for x in 1:2, y in 1:3] #> 2x3 array
+table10 = [x*y for x=1:10, y=1:10] #> 10x10 array
+arrany = Any[i*2 for i in 1:5]
+
+# generic functions
+f(n, m) = "base case"
+f(n::Number, m::Number) = "n and m are both numbers"
+f(n::Number, m) = "n is a number"
+f(n, m::Number) = "m is a number"
+f(n::Integer, m::Integer) = "n and m are both integers"
+#> now generic function f has 5 methods
+f(1.5, 2)
+f(1, "bar")
+f(1, 2)
+f("foo", [1,2])
+f("foo", "bar")
+f(n::Float64, m::Integer) = "n is a float and m is an integer"
+f(1.5, 2)
+# quick overview of all version of a function
+methods(f)
+methods(+)
+
+
+
+## control flow
+# conditional evaluation
+var = 7
+if var > 10
+  println("var has value $var and is bigger than 10.")
+elseif var < 10
+  println("var has value $var and is smaller than 10.")
+else
+  println("var has value $var and is 10.")
+end
+
+a = 10
+b = 15
+z = if a > b a
+else     b
+end
+# can be simplified using ternary operator
+z = a > b ? a : b #>the ternary operator can be chained
+
+# Using short-circuit evaluation
+# the statements with if only are often written as follows
+# if <cond> <statement> end is written as <cond> && <statement>
+# if !<cond> <statement> end is written as <cond> || <statement>
+function sqroot(n::Int)
+  n >= 0 || error("n must be non-negative") #> stop code execution
+  n == 0 && return 0
+  sqrt(n)
+end
+sqroot(4)
+sqroot(0)
+sqroot(-6)
+
+# for loop
+for n = 1:10
+  print(n^3, "\t")
+end
+for n in 1:10
+  print(n^3, " ")
+end
+
+arr = [x^2 for x in 1:10]
+for i = 1:length(arr)
+  println("the $i-th element is $(arr[i])")
+end
+# a more elegant way is using enumerate function
+for (ix, val) in enumerate(arr)
+  println("the $ix-th element is $val") #> ix - index; val - value
+end
+
+# nested for loop
+for n = 1:5
+  for m = 1:5
+    println("$n * $m = $(n*m)")
+  end
+end
+# combine into a single outer loop
+for n = 1:5, m = 1:5
+  println("$n * $m = $(n*m)")
+end
+
+
+# while loop
+a = 10; b = 15
+while a < b
+  # body: process(a)
+  println(a)
+  a += 1
+end
+# loop over an array
+arr = [1, 2, 3, 4]
+while !isempty(arr)
+  print(pop!(arr), ", ")
+end
+
+# break
+a = 10; b = 150
+while a < b
+  # process(a)
+  println(a)
+  a += 1
+  if a >= 50
+    break
+  end
+end
+
+# search for a given element in an array
+arr = rand(1:10, 10)
+println(arr)
+searched = 4
+for (ix, curr) in enumerate(arr)
+  if curr == searched
+    println("The searched element $searched occurs on index $ix")
+    break
+  end
+end
+
+# continue statement
+# skip one (or more) loop repetitions
+for n in 1:10
+  if 3 <= n <= 6
+    continue # skip current iteration
+  end
+  println(n)
+end
+
+# a do-while loop
+while true
+  #code
+  condition || break
+end
+
+
+# exception
+# throw / rethrow
+# error, warn, info
+# try-catch-finally construct
+a = []
+try
+  pop!(a)
+catch ex
+  println(typeof(ex))
+  showerror(STDOUT, ex)
+end
+
+
+# scope - globle vs. local
+x = 9
+function funscope(n)
+  x = 0 #> x is in the local scope of the function
+  for i = 1:n
+    local x #> x is local to the for loop
+    x = i + 1
+    if (x == 7)
+      println("This is the local x in for: $x") #> 7
+    end
+  end
+  x
+  println("This is the local x in funscope: $x") #> 0
+  global x = 15
+end
+funscope(10)
+println("This is the global x: $x") #> 15
+
+# let
+# statements allocate new variable bindings each time they run
+anon = cell(2) # return 2-element array{Any, 1}: #undef #undef
+for i = 1:2
+  anon[i] = () -> println(i)
+  i += 1
+end
+anon[1]()
+anon[2]()
+# What if you wanted them to stick to the value
+# of i at the moment of their creation
+anon = cell(2)
+for i = 1:2
+  let i = i
+    anon[i] = () -> println(i)
+  end
+  i += 1
+end
+anon[1]()
+anon[2]()
+
+begin
+  local x = 1
+  let
+    local x = 2
+    println(x) #> 2
+  end
+  x
+  println(x) #> 1
+end
+
+# The for loops and comprehensions differ in the way
+# they scope an iteration variable
+i = 0
+for i in 1:10
+end
+println(i) #> 10
+# After executing a comprehension, it is still 0
+i = 0
+[i for i = 1:10]
+println(i) #> 0
+
+
+# tasks
+# produce function - similar to yield in Python
+# fibonacci numbers
+function fib_producer(n)
+  a, b = (0, 1)
+  for i = 1:n
+    produce(b)
+    a, b = (b, a + b)
+  end
+end
+# fib_producer(5) - wrong way
+# envelop it as a task that takes a function with no arguments
+tsk1 = Task( () -> fib_producer(10) )
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1)
+consume(tsk1) #> nothing # tsk done
+
+# or can use for loop
+for n in tsk1
+  println(n)
+end
+
+# use a macro
+tsk1 = @task fib_producer(10)
+for n in tsk1
+  println(n)
+end
+
+
+## collection types
+[1, 2, 3] #> column vector
+[1 2 3] #> row vector
+Array{Int64, 1} == Vector{Int64} #> true
+Array{Int64, 2} == Matrix{Int64} #> true
+# create Matrix
+m1 = [1 2; 3 4]
+m1[2, 1]
+m2 = rand(3, 5)
+ndims(m2)
+size(m2)
+size(m2, 1)
+size(m2, 2)
+length(m2)
+idm = eye(3)
+idm[1:end, 2]
+idm[:, 2]
+idm[2, :]
+idmc = idm[2:end, 2:end]
+jarr = fill(Array(Int64, 1), 3)
+jarr[1] = [1, 2]
+jarr[2] = [1, 2, 3, 4]
+jarr[3] = [1, 2, 3]
+jarr
+m1'
+m1 * m1'
+m1 .* m1' #> element-wise muliplication
+inv(m1)
+m1 * inv(m1) #> identity Matrix
+v = [1., 2., 3.]
+w = [2., 4., 6.]
+hcat(v, w)
+vcat(v, w)
+a = [1 2; 3 4]
+b = [5 6; 7 8]
+c = [a; b] #> 4x2
+c = [a, b] #> the same, but return warnings
+reshape(1:12, 3, 4)
+a = rand(3, 3)
+reshape(a, (9,1))
+reshape(a, (2,2)) #> error
+# copy a array
+x = cell(2)
+x[1] = ones(2)
+x[2] = trues(3)
+x
+a = x #> point to same object in memory
+b = copy(x) #> shadow copy with references to the contained arrays
+c = deepcopy(x) #> complete copy of the values
+# now if we change x:
+x[1] = "julia"
+x[2][1] = false
+x
+a #> the same as changed x
+is(a, x) #> true
+b #> The b value retains the changes in a contained array of x, but not if one of the contained arrays becomes another array.
+is(b, x) #> false
+c #> the origin x
+is(c, x) #> false
+
+
+# tuple
+# tuple is immutable
+a, b, c, d = 1, 22.0, "word", 'x'
+t1 = a, b, c, d = 1, 22.0, "word", 'x'
+t1
+typeof(t1)
+() #> empty tuple
+(1, ) #> one element tuple
+for i in t1
+  println(i)
+end
+# unpacked
+x, y = t1
+x
+y
+
+# dictionary
