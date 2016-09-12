@@ -702,4 +702,119 @@ x, y = t1
 x
 y
 
-# dictionary
+# dictionary - hash
+# two elements tuple - (key, value)
+# key must be unique
+# d1 = [1 => 4.2, 2 => 5.3] #> old usage
+d1 = Dict(1 => 4.2, 2 => 5.6)
+# note: all keys must have the same type, so is the values
+
+# dynamic version
+# d1 = {1 => 4.2, 2 => 5.6} #> old syntax
+d1 = Dict{Any, Any}(1 => 4.2, 2 => 5.6)
+d2 = Dict{Any, Any}("a" => 1, (2,3) => true)
+
+# use symboles as keys, symboles are immutable
+d1 = Dict(:A => 100, :B => 200)
+d1[:A]
+d1[:Z] #> keyerror
+get(d1, :Z, 999) #> use 999 instead of an error
+d1[:C] = 300
+d1
+length(d1)
+
+# empty dictionary
+d4 = Dict()
+d5 = Dict{Float64, Int64}()
+d5["c"] = 100 #> error 'convert', worong type of keys
+delete!(d1, :B)
+
+for k in keys(d1)
+  println(k)
+end
+:A in keys(d1)
+haskey(d1, :A)
+collect(keys(d1))
+vi = values(d1)
+for v in values(d1)
+  println(v)
+end
+
+keys1 = ["bach", "allen", "obama"]
+values1 = [1685, 1935, 1961]
+d5 = Dict(keys1, values1) #> old syntax
+d5 = Dict(zip(keys1, values1))
+for (k, v) in d5
+  println("$k was born in $v")
+end
+# alternative
+for p in d5
+  println("$(p[1]) was born in $(p[2])")
+end
+
+dpaires = ["a", 1, "b", 2, "c", 3]
+d6 = [dpaires[i] => dpaires[i+1] for i in 1:2:length(dpaires)]
+d6 = (AbstractString => Int64)[dpaires[i] => dpaires[i+1] for i in 1:2:length(dpaires)]
+
+function showfactor(n)
+  d = factor(n)
+    println("factors for $n")
+    for (k, v) in d
+      print("$k^$v\t")
+    end
+end
+
+@time showfactor(3752)
+
+# sets
+# order doesn't matter, elements have to be unique
+s1 = Set({11, 14, 13, 7, 14, 11}) #> old syntax
+s1 = Set(Any[11, 14, 13, 7, 14, 11])
+s1 = Set(Int64[11, 14, 13, 7, 14, 11])
+
+s1 = Set(Any[11, 25])
+s2 = Set(Any[25, 3.14])
+union(s1, s2)
+intersect(s1, s2)
+setdiff(s1, s2)
+setdiff(s2, s1)
+issubset(s1, s2)
+issubset(s1, Set(Any[25,4,11]))
+push!(s1, 33) #> add one element
+in(33, s1)
+Set([1,2,3])
+Set({[1,2,3]}) #> not right
+
+# checking an element is present is independent of the size of the set
+x1 = Set(collect(1:100))
+@time 2 in x1 #> 0.000007
+x2 = Set(collect(1:1000000))
+@time 2 in x1 #> 0.000007
+
+
+
+# example project - word frequecy
+# 1. read in text file as a string
+str = readall("start.jl")
+# 2. replace non alphabet characters from text with a space
+nonalpha = r"(\W\s?)"
+str = replace(str, nonalpha, ' ')
+digits1 = r"(\d+)"
+str = replace(str, digits1, ' ')
+# 3. split text in words
+word_list = split(str, ' ')
+# 4. make a dictionary with the words and count their frequecies
+word_freq = Dict{AbstractString, Int64}()
+for word in word_list
+  word = strip(word)
+  if isempty(word) continue end
+  haskey(word_freq, word) ?
+    word_freq[word] += 1 :
+    word_freq[word] = 1
+end
+# sort the words (the keys) and print out the frequecies:
+println("Word: frequecy \n")
+words = sort!(collect(keys(word_freq)))
+for word in words
+  println("$word: $(word_freq[word])")
+end
