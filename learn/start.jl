@@ -889,3 +889,106 @@ end
 Developer(name, iq) = Developer(name, iq, "Java")
 devel1 = Developer("Bob", 110)
 devel2 = Developer("William", 145, "julia")
+type Manager
+  name::AbstractString
+  iq
+  department::AbstractString
+end
+man1 = Manager("julia", 120, "ict")
+# Concrete types, such as Developer	or Manager, cannot be subtyped
+type MobileDeveloper <: Developer
+  platform
+end
+cleverness(emp::Employee) = emp.iq
+cleverness(devel1)
+cleverness(man1) #> error, no such method
+
+function cleverer(d::Developer, e::Employee)
+  println("The developer $(d.name) is cleverer I think!")
+end
+cleverer(devel1, devel2)
+cleverer(devel1, man1) #> error
+
+function cleverer(e::Employee, d::Developer)
+  if e.iq <= d.iq
+    println("the developer $(d.name) is cleverer!")
+  else
+    println("the Employee $(e.name) is cleverer!")
+  end
+end
+cleverer(devel1, devel2)
+
+function cleverer(e::Developer, d::Developer)
+  if e.iq <= d.iq
+    println("the developer $(d.name) is cleverer!")
+  else
+    println("the Employee $(e.name) is cleverer!")
+  end
+end
+cleverer(devel1, devel2)
+
+type Person
+  firstname::AbstractString
+  lastname::AbstractString
+  sex::Char
+  age::Float64
+  children::Array{AbstractString,1}
+end
+p1 = Person("Alan", "Bates", 'M', 45.5, ["Jeff", "Stephan"])
+p2 = Person[]
+
+push!(p2, p1)
+show(p2)
+push!(p2, Person("Julia", "Smith", 'F', 27, ["Viral"]))
+show(p2)
+
+fullname1(p::Person) = "$(p.firstname) $(p.lastname)"
+# or
+fullname2(p::Person) = string(p.firstname, ' ', p.lastname)
+print(fullname1(p1))
+print(fullname2(p1))
+
+## standard module and path
+import Winston #> Tk error in Atom
+import Gadfly
+Winston.plot(rand(10))
+Gadfly.plot(x=collect(1:10), y=rand(10))
+
+typeof(Base)
+names(Main)
+whos()
+
+# example - temperature converter
+# in TemperatureConverter.jl
+module TemperatureConverter
+
+  export as_celsius
+
+  function as_celsius(temperature, unit)
+    if unit == :Celsius
+      return temperature
+    elseif unit == :Kelvin
+      return kelvin_to_celsius(temperature)
+    end
+  end
+
+  function kelvin_to_celsius(temperature)
+    # 'private' function
+    return temperature + 273
+  end
+
+end
+
+# Julia looks for module files in directories defined in the LOAD_PATH variable
+LOAD_PATH
+# add other places
+push!(LOAD_PATH, "/home/randi/randi/julia2016/Julia/learn")
+LOAD_PATH #> now have additional place to look
+
+using TemperatureConverter #> load module
+as_celsius(14, :Celsius) #> 14
+println("$(as_celsius(100,	:Celsius))") #> 100
+println("$(as_celsius(100,	:Kelvin))") #> 373
+println("$(kelvin_to_celsius(0))") #> 273 ? should be error, since not exported
+
+whos(TemperatureConverter) #> only can see one function - as_celsius
