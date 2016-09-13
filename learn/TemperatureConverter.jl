@@ -2,6 +2,8 @@ module TemperatureConverter
 
   export as_celsius
 
+  println("TemperatureConverter is loaded.")
+
   function as_celsius(temperature, unit)
     if unit == :Celsius
       return temperature
