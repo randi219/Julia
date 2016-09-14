@@ -992,3 +992,137 @@ println("$(as_celsius(100,	:Kelvin))") #> 373
 println("$(kelvin_to_celsius(0))") #> 273 ? should be error, since not exported
 
 whos(TemperatureConverter) #> only can see one function - as_celsius
+
+
+
+## metaprogramming
+# expression and symbols
+# syntax tree
+:(2+3)
+typeof(:(2+3)) #> expr
+quote
+  a = 42
+  b = a^2
+  a - b
+end
+:(a = 42; b = a^2; a - b)
+e1 = :(2+3)
+names(e1) #> old syntax
+fieldnames(e1)
+e1.head #> :call
+e1.args #> vector :+, 2, 3
+e1.typ #> any
+# 2+3 is a call of the '+' function with argument 2 and 3
+2 + 3 == +(2, 3)
+
+e2 = :(2 + a * b - c)
+e2.head
+e2.args
+e2.typ
+dump(e2)
+
+e1 = Expr(:call, *, 3, 4)
+eval(e1)
+e2 = Expr(:call, *, 3, :a)
+eval(e2) #> error, a not defined
+a = 4
+eval(e2)
+e3 = :(b = 1)
+
+# Expression interpolation (with $) evaluates when the expression is constructed
+# Quotation (with : or quote) evaluates only when the expression is passed to eval at runtime
+a = 4
+b = 1
+e4 = :(a+b)
+e5 = :($a+b)
+
+
+# marco
+# Macros are like functions, but instead of values,
+# they take expressions (which can also be symbols or literals)
+# as input arguments. When a macro is evaluated, the input expression is expanded,
+# that is, the macro returns a modified expression.
+# This expansion occurs at parse time when
+# the syntax tree is being built,
+# not when the code is actually executed.
+
+# compare to function
+# Function: It takes the input values and returns the computed values at runtime
+# Macro: It takes the input expressions and returns the modified expressions at parse time
+
+# example - macint macro
+macro macint(ex)
+  quote
+    println("start")
+    $ex
+    println("after")
+  end
+end
+
+@macint println("Where am I")
+
+# example - assert
+macro assert_new(ex)
+  :($ex ? nothing : error("Assertion failed: ", $(string(ex))))
+end
+
+@assert_new 1 == 1.0
+@assert_new 1 == 42
+macroexpand(:(@assert_new 1 == 42))
+
+# example - unless construct
+macro unless(test, branch)
+  quote
+    if !$test
+      $branch
+    end
+  end
+end
+
+arr = [3.14, 42, 'b']
+@unless 42 in arr println("arr does not contain 42")
+@unless 41 in arr println("arr does not contain 41")
+macroexpand(:(@unless 41 in arr println("arr does not contain 41")))
+
+# example - convert an array of strings to an array of type T
+macro convarr(arr, T)
+  :(reshape($T[$arr...], size($arr)...))
+end
+
+arr = ["a", "b", "c"]
+@convarr arr Symbol
+
+# example - timeit
+macro timeit(ex)
+  quote
+    local t0 = time()
+    local val = $(esc(ex))
+    local t1 = time()
+    print("elapsed time in seconds: ")
+    @printf "%.3f" t1 - t0
+    val
+  end
+end
+
+@timeit factorial(10)
+@timeit a^3
+
+# test
+using Base.Test
+@test 1 == 3
+@test_approx_eq 1 1.1
+@test_approx_eq_eps 1 1.1 0.2
+
+# debugging
+arr = [1, 2]
+@which sort(arr)
+456 * 789 + (@show 2 + 3)
+
+# benchmarking
+@time [x^2 for x in 1:1000]
+@timed [x^2 for x in 1:1000]
+@elapsed [x^2 for x in 1:1000]
+@allocated [x^2 for x in 1:1000]
+tic()
+[x^2 for x in 1:1000]
+toc()
