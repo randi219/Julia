@@ -1126,3 +1126,16 @@ arr = [1, 2]
 tic()
 [x^2 for x in 1:1000]
 toc()
+
+
+
+## I/O, networking, and parallel computing
+stream = STDIN
+for line in eachline(stream)
+  print("found $line")
+end
+
+while !eof(stream)
+  x = read(stream, char)
+  println("found: $x")
+end
