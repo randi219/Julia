@@ -1139,3 +1139,131 @@ while !eof(stream)
   x = read(stream, char)
   println("found: $x")
 end
+
+
+## data frame
+Pkg.update()
+Pkg.add("DataFrames")
+Pkg.add("DataArrays")
+Pkg.add("RDatasets")
+
+versioninfo()
+workspace()
+
+using DataArrays
+using DataFrames
+
+dv = @data([7, 3, NA, 5, 42])
+sum(dv)
+dv[5] = NA
+display(dv)
+convert(Array, dv)
+sum(dropna(dv))
+repl = -1
+sum(array(dv, repl)) #> old syntax
+convert(Array, dv, repl)
+
+df = DataFrame()
+df[:Col1] = 1:4
+df[:Col2] = [e, pi, sqrt(2), 42]
+df[:Col3] = [true, false, true, true]
+show(df)
+
+df = DataFrame(
+        Col1 = 1:4,
+        Col2 = [2, pi, sqrt(2), 42],
+        Col3 = [true, false, true, true]
+)
+show(df)
+show(df[2])
+show(df[:Col2])
+show(df[1, :])
+show(df[2:3, :])
+show(df[2:3, :Col2])
+show(df[2:3, [:Col2, :Col3]])
+
+# first/last six lines
+head(df)
+tail(df)
+
+names(df)
+eltypes(df)
+describe(df)
+size(df)
+size(df, 1)
+
+# read/write csv
+dat = readtable("xxx.csv", separator = ';')
+writetable("dataframe1.csv", df)
+
+# element-wise comparison
+df[:Col1] .== 1
+df[df[:Col1] .== 1, :]
+by(df, :Col3, data -> size(data, 1))
+
+hist(df[:Col3])
+e1, count = hist(df[:Col3])
+class = sort(unique(df[:Col3]))
+df_quality = DataFrame(qual=class, no=count)
+show(df_quality)
+
+Pkg.add("LightXML")
+Pkg.update()
+
+
+## parallel loops and maps
+function buffon(n)
+  hit = 0
+  for i = 1:n
+    mp = rand()
+    phi = (rand() * pi) - pi / 2 # angle at which needles falls
+    xright = mp + cos(phi)/2 # location of needle
+    xleft = mp - cos(phi)/2
+    # does needle cross either x == 0 or x == 1?
+    p = (xright >= 1 || xleft <= 0) ? 1:0
+    hit += p
+  end
+  miss = n - hit
+  piapprox = n /hit * 2
+end
+
+@time buffon(100000)
+@time buffon(100000000)
+
+function buffon_par(n)
+  hit = @parallel (+) for i = 1:n
+      mp = rand()
+      phi = (rand() * pi) - pi / 2
+      xright = mp + cos(phi)/2
+      xleft = mp - cos(phi)/2
+        (xright >= 1 || xleft <= 0) ? 1 : 0
+    end
+  miss = n - hit
+  piapprox = n / hit * 2
+end
+
+@time buffon_par(100000)
+@time buffon_par(100000000)
+
+
+Pkg.add("PyCall")
+using PyCall
+pyeval("10*10")
+@pyimport math # import python library
+math.sin(math.pi / 2)
+
+Pkg.add("Lint")
+Pkg.add("PyPlot")
+Pkg.add("Colors")
+ENV["PYTHON"]=""
+Pkg.build("PyCall")
+using PyPlot
+
+using Gadfly
+Pkg.add("Cpp")
+using Cpp
+using Compat
+Pkg.add("TimeZones")
+using TimeZones
+Pkg.add("RDatasets")
+using RDatasets
