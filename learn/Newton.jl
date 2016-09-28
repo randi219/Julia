@@ -1,3 +1,15 @@
+"""
+Newton-Raphson method
+---------------------
+Newton's method for logistic regression
+    loglikelihood function
+    gradient function
+    hessian function
+    Newtion-Raphson function    
+"""
+
+
+
 # loglikelihood function - logistic regression model
 function logistic_loglik(y::Vector{Int64},
                          X::Array{Float64},
