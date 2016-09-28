@@ -129,7 +129,7 @@ inv(-1*h1)
 
 # Newton's method
 function newton_method(f::Function, fp1::Function, fp2::Function, b0, y, X;
-                       tolerance=1e-3, maxiter=100)
+                       tolerance=1e-6, maxiter=100)
   b = b0
   oldf = f(y, X, b)
   iter = 0
