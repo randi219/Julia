@@ -78,6 +78,11 @@ fitnmd = newton_method_distributed(logistic_loglik, logistic_gradient, logistic_
                                    w0, vec(y1), X1, vec(y2), X2, vec(y3), X3)
 fitnm
 
+newton_distributed(logistic_loglik, logistic_gradient, logistic_hessian,
+                   w0, vec(y1), X1, vec(y2), X2, vec(y3), X3)
+
+
+
 
 
 
@@ -127,3 +132,6 @@ w01 = zeros(5)
 
 fitnmd1 = newton_method_distributed(logistic_loglik, logistic_gradient, logistic_hessian,
                                    w01, vec(y1), X11, vec(y2), X21, vec(y3), X31)
+
+fitnmd11 = newton_distributed(logistic_loglik, logistic_gradient, logistic_hessian,
+                             w01, vec(y1), X11, vec(y2), X21, vec(y3), X31)

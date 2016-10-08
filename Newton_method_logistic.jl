@@ -154,3 +154,74 @@ function newton_method_distributed(f::Function, fp1::Function, fp2::Function,
   and hessian"""
   return b, iter, loglik, hessian
 end
+
+
+
+
+## distributed - varargs
+# dat is varargs that contains all pairs of outcome and predictors
+# thoughtout all centers. Thus, it must be an even number.
+function newton_distributed(f::Function, fp1::Function, fp2::Function,
+                            b0, dat...; tolerance=1e-6, maxiter=100)
+    b = b0
+    n0 = length(b0)
+    # check input
+    if length(dat) % 2 == 1
+        error("dat has a wrong length!")
+    end
+    n = convert(Int64, round(length(dat)/2))           #> number of centers
+
+    # initial loglikelihood
+    oldfc = zeros(n)
+    for i in 1:n
+        oldfc[i] = f(dat[2*i - 1], dat[2*i], b)
+    end
+    oldf = sum(oldfc)
+
+    # iteration
+    iter = 0
+
+    for i = 1:maxiter
+
+      iter = iter + 1
+
+      newfc = zeros(n)          #> restore loglikelihood
+      Hv = zeros(n0, n0)        #> sum of H mat
+      Gv = zeros(n0)            #> sum of G mat
+
+      for j in 1:n
+          Gtmp = fp1(dat[2*j - 1], dat[2*j], b)
+          Htmp = fp2(dat[2*j - 1], dat[2*j], b)
+          Gv = Gv + Gtmp
+          Hv = Hv + Htmp
+      end
+      newb = b - *(inv(Hv), Gv)
+
+      for k in 1:n
+          newfc[k] = f(dat[2*k - 1], dat[2*k], newb)
+      end
+      newf = sum(newfc)
+
+      relative_change = abs(newf - oldf) / oldf
+      relative_changec = abs(newfc - oldfc) ./ oldfc
+
+      if abs(relative_change) > tolerance ||
+          sum(abs(relative_changec) .> tolerance) > 0
+        b = newb
+        oldf = newf
+        oldfc = newfc
+      else
+        break
+      end
+    end
+
+    iter < maxiter || error("Did not converge in ", maxiter, " steps.")
+
+    loglik = oldf
+    hessian = Gv
+
+    """return
+    estimated beta coef, number of iteration, loglikelihood,
+    and hessian"""
+    return b, iter, loglik, hessian
+  end
