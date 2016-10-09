@@ -158,6 +158,12 @@ end
 
 
 
+"""
+This method can deal with various length data input
+but, it doesn't work well in the real world
+it's not convenient to write all centers in argument
+"""
+
 ## distributed - varargs
 # dat is varargs that contains all pairs of outcome and predictors
 # thoughtout all centers. Thus, it must be an even number.
@@ -224,4 +230,82 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
     estimated beta coef, number of iteration, loglikelihood,
     and hessian"""
     return b, iter, loglik, hessian
+  end
+
+
+
+
+
+
+"""
+use two dicts to restore data
+"""
+function newton_distributed2(f::Function, fp1::Function, fp2::Function,
+                             b0::Vector, response::Dict, dat::Dict;
+                             tolerance=1e-6, maxiter=100)
+    b = b0
+    n0 = length(b0)
+    # check input
+    if length(dat) != length(response)
+        error("dat doesn't have the same length as that of response!")
+    end
+    if keys(dat) != keys(response)
+        error("Center id doesn't match!")
+    end
+    n = length(response)           #> number of centers
+
+    # initial loglikelihood
+    oldfc = zeros(n)
+    for i in keys(response)
+        oldfc[i] = f(response[i], dat[i], b)
+    end
+    oldf = sum(oldfc)
+
+    # iteration
+    iter = 0
+
+    for i = 1:maxiter
+
+      iter = iter + 1
+
+      newfc = zeros(n)          #> restore loglikelihood
+      Hv = zeros(n0, n0)        #> sum of H mat
+      Gv = zeros(n0)            #> sum of G mat
+
+      for j in keys(response)
+          Gtmp = fp1(response[j], dat[j], b)
+          Htmp = fp2(response[j], dat[j], b)
+          Gv = Gv + Gtmp
+          Hv = Hv + Htmp
+      end
+      newb = b - *(inv(Hv), Gv)
+
+      for k in keys(response)
+          newfc[k] = f(response[k], dat[k], newb)
+      end
+      newf = sum(newfc)
+
+      relative_change = abs(newf - oldf) / oldf
+      relative_changec = abs(newfc - oldfc) ./ oldfc
+
+      if abs(relative_change) > tolerance ||
+          sum(abs(relative_changec) .> tolerance) > 0
+        b = newb
+        oldf = newf
+        oldfc = newfc
+      else
+        break
+      end
+    end
+
+    iter < maxiter || error("Did not converge in ", maxiter, " steps.")
+
+    loglik = oldf
+    hessian = Gv
+    se = sqrt(diag(inv(-1*hessian)))
+
+    """return
+    estimated beta coef, number of iteration, loglikelihood,
+    and hessian"""
+    return b, se, loglik, hessian, iter
   end
