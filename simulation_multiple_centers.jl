@@ -81,6 +81,19 @@ fitnm
 newton_distributed(logistic_loglik, logistic_gradient, logistic_hessian,
                    w0, vec(y1), X1, vec(y2), X2, vec(y3), X3)
 
+response = Dict()
+response[1] = vec(y1)
+response[2] = vec(y2)
+response[3] = vec(y3)
+XX = Dict()
+XX[1] = X1
+XX[2] = X2
+XX[3] = X3
+
+keys(response)
+
+newton_distributed2(logistic_loglik, logistic_gradient, logistic_hessian,
+                   w0, response, XX)
 
 
 
@@ -135,3 +148,15 @@ fitnmd1 = newton_method_distributed(logistic_loglik, logistic_gradient, logistic
 
 fitnmd11 = newton_distributed(logistic_loglik, logistic_gradient, logistic_hessian,
                              w01, vec(y1), X11, vec(y2), X21, vec(y3), X31)
+
+response1 = Dict()
+response1[1] = vec(y1)
+response1[2] = vec(y2)
+response1[3] = vec(y3)
+XX1 = Dict()
+XX1[1] = X11
+XX1[2] = X21
+XX1[3] = X31
+
+newton_distributed2(logistic_loglik, logistic_gradient, logistic_hessian,
+                   w01, response1, XX1)

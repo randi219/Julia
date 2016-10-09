@@ -158,8 +158,7 @@ end
 
 
 
-"""
-This method can deal with various length data input
+"""This method can deal with various length data input
 but, it doesn't work well in the real world
 it's not convenient to write all centers in argument
 """
@@ -171,6 +170,7 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
                             b0, dat...; tolerance=1e-6, maxiter=100)
     b = b0
     n0 = length(b0)
+
     # check input
     if length(dat) % 2 == 1
         error("dat has a wrong length!")
@@ -186,11 +186,11 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
 
     # iteration
     iter = 0
+    HH = zeros(n0, n0)          #> restore hessian
 
     for i = 1:maxiter
 
       iter = iter + 1
-
       newfc = zeros(n)          #> restore loglikelihood
       Hv = zeros(n0, n0)        #> sum of H mat
       Gv = zeros(n0)            #> sum of G mat
@@ -202,6 +202,7 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
           Hv = Hv + Htmp
       end
       newb = b - *(inv(Hv), Gv)
+      HH = Hv
 
       for k in 1:n
           newfc[k] = f(dat[2*k - 1], dat[2*k], newb)
@@ -224,7 +225,7 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
     iter < maxiter || error("Did not converge in ", maxiter, " steps.")
 
     loglik = oldf
-    hessian = Gv
+    hessian = HH
 
     """return
     estimated beta coef, number of iteration, loglikelihood,
@@ -249,9 +250,6 @@ function newton_distributed2(f::Function, fp1::Function, fp2::Function,
     if length(dat) != length(response)
         error("dat doesn't have the same length as that of response!")
     end
-    if keys(dat) != keys(response)
-        error("Center id doesn't match!")
-    end
     n = length(response)           #> number of centers
 
     # initial loglikelihood
@@ -263,6 +261,7 @@ function newton_distributed2(f::Function, fp1::Function, fp2::Function,
 
     # iteration
     iter = 0
+    HH = zeros(n0, n0)          #> restore hessian
 
     for i = 1:maxiter
 
@@ -279,6 +278,7 @@ function newton_distributed2(f::Function, fp1::Function, fp2::Function,
           Hv = Hv + Htmp
       end
       newb = b - *(inv(Hv), Gv)
+      HH = Hv
 
       for k in keys(response)
           newfc[k] = f(response[k], dat[k], newb)
@@ -301,7 +301,7 @@ function newton_distributed2(f::Function, fp1::Function, fp2::Function,
     iter < maxiter || error("Did not converge in ", maxiter, " steps.")
 
     loglik = oldf
-    hessian = Gv
+    hessian = HH
     se = sqrt(diag(inv(-1*hessian)))
 
     """return
