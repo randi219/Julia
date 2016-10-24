@@ -94,11 +94,14 @@ function newton_method(f::Function, fp1::Function, fp2::Function,
 
   loglik = oldf
   hessian = fp2(y, X, b)
+  se = sqrt(diag(inv(-1*hessian)))
+  zscore = b ./ se
+  pvalue = 2.0 * ccdf(Normal(), abs.(zscore))
 
   """return
   estimated beta coef, number of iteration, loglikelihood,
   and hessian"""
-  return b, iter, loglik, hessian
+  return b, se, loglik, hessian, iter, zscore, pvalue
 end
 
 
@@ -242,15 +245,15 @@ function newton_distributed(f::Function, fp1::Function, fp2::Function,
 use two dicts to restore data
 """
 function newton_distributed2(f::Function, fp1::Function, fp2::Function,
-                             b0::Vector, response::Dict, dat::Dict;
+                             b0::Vector{Float64}, response, dat;
                              tolerance=1e-6, maxiter=100)
     b = b0
-    n0 = length(b0)
+    n0 = length(b0)             #> number of coefficient
     # check input
-    if length(dat) != length(response)
+    length(dat) == length(response) ||
         error("dat doesn't have the same length as that of response!")
-    end
-    n = length(response)           #> number of centers
+
+    n = length(response)        #> number of centers
 
     # initial loglikelihood
     oldfc = zeros(n)
@@ -298,14 +301,16 @@ function newton_distributed2(f::Function, fp1::Function, fp2::Function,
       end
     end
 
-    iter < maxiter || error("Did not converge in ", maxiter, " steps.")
+    iter < maxiter || warn("Did not converge in ", maxiter, " steps.")
 
     loglik = oldf
     hessian = HH
     se = sqrt(diag(inv(-1*hessian)))
+    zscore = b ./ se
+    pvalue = 2.0 * ccdf(Normal(), abs.(zscore))
 
     """return
     estimated beta coef, number of iteration, loglikelihood,
-    and hessian"""
-    return b, se, loglik, hessian, iter
+    hessian, zcore, and pvalue"""
+    return b, se, loglik, hessian, iter, zscore, pvalue
   end
